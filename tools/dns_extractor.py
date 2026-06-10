@@ -199,7 +199,14 @@ if __name__ == "__main__":
     if raw_path.exists():
         packets = json.loads(raw_path.read_text())
 
-    csv = "data/input/dns_tunneling.csv" if len(sys.argv) < 2 else sys.argv[1]
+    # Allow disabling CSV with "none" argument
+    csv = None
+    if len(sys.argv) >= 2:
+        csv = None if sys.argv[1].lower() == "none" else sys.argv[1]
+    elif not packets:
+        # Only use CSV as fallback if no packets
+        csv = "data/input/dns_tunneling.csv"
+
     result = extract_dns_queries(packets=packets, csv_path=csv)
     if isinstance(result, list):
         print(f"Done: {len(result)} records written to {OUTPUT_PATH}")

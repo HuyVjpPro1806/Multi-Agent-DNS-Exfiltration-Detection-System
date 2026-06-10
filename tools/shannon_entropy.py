@@ -109,7 +109,8 @@ def calculate_entropy(input_path: str, output_path: str) -> dict:
             "domain": query["domain"],
             "subdomain": subdomain,
             "label": query.get("label", "unknown"),
-            "entropy_score": round(entropy_score, 4)
+            "entropy_score": round(entropy_score, 4),
+            "source": query.get("source", "unknown")
         })
 
     total_processed = len(results)
