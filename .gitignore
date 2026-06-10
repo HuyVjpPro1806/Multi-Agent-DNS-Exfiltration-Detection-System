@@ -34,3 +34,6 @@ desktop.ini
 *.tmp
 *.bak
 *~
+data/input/
+data/output/
+models/

@@ -40,6 +40,7 @@ Each item must contain:
 | `subdomain`     | string  | Subdomain extracted from input                 |
 | `label`         | string  | Ground truth label (benign/malicious) if known |
 | `entropy_score` | float   | Shannon entropy (0.0 to ~5.2)                  |
+| `source`        | string  | Data source: "pcap" or "csv"                   |
 
 ## Entropy calculation details
 
