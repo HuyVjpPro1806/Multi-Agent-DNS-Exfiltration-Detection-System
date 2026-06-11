@@ -10,7 +10,6 @@ Outputs data/output/dns_queries.json consumed by all Stage-2 agents.
 """
 
 import json
-import logging
 import os
 from collections import Counter
 from pathlib import Path
@@ -25,6 +24,7 @@ from tools.logging_utils import setup_pipeline_logger
 log = setup_pipeline_logger(__name__)
 
 OUTPUT_PATH = Path("data/output/dns_queries.json")
+TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=None)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -32,7 +32,7 @@ OUTPUT_PATH = Path("data/output/dns_queries.json")
 def _parse_domain(domain: str) -> dict:
     """Extract subdomain, tld, label_count, domain_length, digit_ratio."""
     domain = domain.lower().rstrip(".")
-    ext = tldextract.extract(domain)
+    ext = TLD_EXTRACTOR(domain)
     subdomain = ext.subdomain or ""
     tld = ext.suffix or ""
     label_count = len([p for p in domain.split(".") if p])
