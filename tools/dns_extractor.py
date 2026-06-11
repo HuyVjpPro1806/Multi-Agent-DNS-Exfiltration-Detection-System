@@ -25,6 +25,7 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger(__name__)
 
 OUTPUT_PATH = Path("data/output/dns_queries.json")
+TLD_EXTRACTOR = tldextract.TLDExtract(suffix_list_urls=None)
 
 
 # ── helpers ──────────────────────────────────────────────────────────────────
@@ -32,7 +33,7 @@ OUTPUT_PATH = Path("data/output/dns_queries.json")
 def _parse_domain(domain: str) -> dict:
     """Extract subdomain, tld, label_count, domain_length, digit_ratio."""
     domain = domain.lower().rstrip(".")
-    ext = tldextract.extract(domain)
+    ext = TLD_EXTRACTOR(domain)
     subdomain = ext.subdomain or ""
     tld = ext.suffix or ""
     label_count = len([p for p in domain.split(".") if p])
