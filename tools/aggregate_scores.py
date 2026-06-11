@@ -52,6 +52,13 @@ def _load_json_array(path: Path, name: str) -> list[dict[str, Any]] | dict[str, 
         log.error(f"Failed to read {name} file: {e}")
         return {"error": "read_failed", "stage": name, "path": str(path), "detail": str(e)}
 
+    # Handle empty result format from embed_score.py
+    if isinstance(data, dict) and "metadata" in data and "results" in data:
+        if data["metadata"].get("status") == "no_valid_queries":
+            log.warning(f"{name} has no valid queries")
+            return data["results"]  # Return empty list
+        return {"error": "invalid_format", "stage": name, "path": str(path)}
+
     if not isinstance(data, list):
         log.error(f"{name} file must contain a JSON array")
         return {"error": "invalid_format", "stage": name, "path": str(path)}
@@ -115,11 +122,10 @@ def _index_scores(
 
 def load_scores(entropy_path: str, dga_path: str, embed_path: str) -> Dict[int, Dict[str, Any]]:
     """
-    Load and merge scores from 3 files by query_id.
+    Load and merge scores from 3 files by query_id with composite validation.
 
-    Only query_ids present in all 3 score files are returned. This keeps the
-    orchestrator output faithful to the parallel Stage-2 contract instead of
-    silently scoring missing branches as zero.
+    Only query_ids present in all 3 score files are returned. Validates that
+    domain and source match across branches to prevent silent cross-domain merging.
     """
     files = {
         "entropy": Path(entropy_path),
@@ -153,11 +159,42 @@ def load_scores(entropy_path: str, dga_path: str, embed_path: str) -> Dict[int, 
         log.warning(f"Skipped {missing_count} query_ids missing one or more score types")
 
     merged: dict[int, dict[str, Any]] = {}
+    mismatch_count = 0
 
     for query_id in sorted(common_query_ids):
         entropy = indexed["entropy"][query_id]
         dga = indexed["dga"][query_id]
         embed = indexed["embed"][query_id]
+
+        # Normalize fields for comparison (case-insensitive, whitespace-stripped)
+        def normalize(val: Any) -> str:
+            return str(val or "").strip().lower()
+
+        entropy_domain = normalize(entropy.get("domain"))
+        dga_domain = normalize(dga.get("domain"))
+        embed_domain = normalize(embed.get("domain"))
+
+        entropy_source = normalize(entropy.get("source"))
+        dga_source = normalize(dga.get("source"))
+        embed_source = normalize(embed.get("source"))
+
+        # Validate domain consistency across branches
+        if not (entropy_domain == dga_domain == embed_domain):
+            log.error(
+                f"Domain mismatch for query_id={query_id}: "
+                f"entropy={entropy.get('domain')}, dga={dga.get('domain')}, embed={embed.get('domain')}"
+            )
+            mismatch_count += 1
+            continue
+
+        # Validate source consistency across branches
+        if not (entropy_source == dga_source == embed_source):
+            log.error(
+                f"Source mismatch for query_id={query_id}: "
+                f"entropy={entropy.get('source')}, dga={dga.get('source')}, embed={embed.get('source')}"
+            )
+            mismatch_count += 1
+            continue
 
         merged[query_id] = {
             "query_id": query_id,
@@ -168,6 +205,9 @@ def load_scores(entropy_path: str, dga_path: str, embed_path: str) -> Dict[int, 
             "dga_score": float(dga.get("dga_score", 0.0)),
             "embed_score": float(embed.get("embed_score", 0.0)),
         }
+
+    if mismatch_count:
+        log.warning(f"Rejected {mismatch_count} query_ids due to domain/source mismatches")
 
     return merged
 

@@ -417,7 +417,22 @@ def calculate_embed_scores(
 
     if not valid_queries:
         log.error("No valid queries found")
-        return {"error": "no_valid_queries"}
+        # Always write output file to prevent stale file reuse
+        output_file = Path(output_path)
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        empty_result = {
+            "metadata": {
+                "status": "no_valid_queries",
+                "total_input": len(queries),
+                "skipped": skipped,
+                "message": "No valid queries with required fields (query_id, domain)"
+            },
+            "results": []
+        }
+        with open(output_file, "w", encoding="utf-8") as f:
+            json.dump(empty_result, f, indent=2)
+        log.info(f"Wrote empty result file → {output_file}")
+        return {"error": "no_valid_queries", "output_file": str(output_file)}
 
     log.info(f"Found {len(valid_queries)} valid queries")
     if skipped:

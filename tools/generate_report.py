@@ -85,7 +85,8 @@ def generate_report(input_path: str, output_path: str, top_n: int = 10) -> Dict[
         if score.get("verdict") == "suspected"
     ]
     suspected_count = len(suspected)
-    top_domains = sorted_scores[:max(top_n, 0)]
+    # BUG FIX: Use suspected list, not sorted_scores, to ensure only suspicious domains appear
+    top_domains = suspected[:max(top_n, 0)]
 
     sources: dict[str, int] = {}
     for score in scores:
