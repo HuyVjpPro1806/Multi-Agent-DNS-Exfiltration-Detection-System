@@ -14,9 +14,9 @@ from pathlib import Path
 os.environ.setdefault("WINDIR", r"C:\Windows")
 
 from scapy.all import IP, TCP, UDP, rdpcap, sniff
+from tools.logging_utils import setup_pipeline_logger
 
-logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
-log = logging.getLogger(__name__)
+log = setup_pipeline_logger(__name__)
 
 OUTPUT_PATH = Path("data/output/raw_packets.json")
 
