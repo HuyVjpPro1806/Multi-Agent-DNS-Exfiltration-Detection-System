@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pi DNS Exfiltration Dashboard</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">π</span>
+      <div>
+        <strong>Pi Security Lab</strong>
+        <small>DNS Exfiltration Detector</small>
+      </div>
+    </div>
+    <nav>
+      <button class="nav-item active" data-view="analyze">Analyze Traffic</button>
+      <button class="nav-item" data-view="pipeline">Agent Pipeline</button>
+      <button class="nav-item" data-view="report">Security Report</button>
+    </nav>
+    <div class="system-status">
+      <span class="status-dot"></span>
+      <div><strong>System ready</strong><small>FastAPI + Pi agent chain</small></div>
+    </div>
+  </aside>
+
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">MULTI-AGENT NETWORK DEFENSE</p>
+        <h1 id="page-title">Analyze DNS Traffic</h1>
+      </div>
+      <div class="header-actions">
+        <div id="job-badge" class="job-badge hidden"></div>
+        <a id="capture-download" class="header-download hidden" href="#">Download PCAP</a>
+        <button id="header-capture-stop" class="header-stop hidden" type="button">Stop capture</button>
+      </div>
+    </header>
+
+    <section id="analyze-view" class="view active">
+      <div class="hero-grid">
+        <article class="panel upload-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">NEW ANALYSIS</p>
+              <h2>Choose an evidence source</h2>
+            </div>
+            <span class="step-tag">Stage 01</span>
+          </div>
+          <div class="source-tabs">
+            <button class="source-tab active" type="button" data-source="upload">Upload evidence</button>
+            <button class="source-tab" type="button" data-source="live">Live capture</button>
+          </div>
+
+          <div id="upload-source" class="source-panel active">
+            <form id="upload-form">
+              <label class="drop-zone" id="drop-zone">
+                <input id="file-input" type="file" accept=".pcap,.pcapng,.csv" required>
+                <span class="upload-icon">↑</span>
+                <strong id="file-label">Drop a PCAP or CSV file here</strong>
+                <small>or click to browse · maximum 512 MB</small>
+              </label>
+              <button class="primary-button" type="submit">Run multi-agent analysis</button>
+              <p id="form-error" class="error"></p>
+            </form>
+          </div>
+
+          <div id="live-source" class="source-panel">
+            <form id="capture-form">
+              <div class="capture-banner">
+                <span class="capture-pulse"></span>
+                <div>
+                  <strong>Capture outbound DNS queries</strong>
+                  <small>Uses tcpdump with a fixed DNS-only filter</small>
+                </div>
+              </div>
+              <label class="field">
+                <span>Network interface</span>
+                <select id="interface-select">
+                  <option value="">Loading interfaces...</option>
+                </select>
+              </label>
+              <div class="field-grid">
+                <label class="field">
+                  <span>Duration</span>
+                  <select id="capture-timeout">
+                    <option value="10">10 seconds</option>
+                    <option value="30" selected>30 seconds</option>
+                    <option value="60">60 seconds</option>
+                    <option value="120">120 seconds</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Packet limit</span>
+                  <input id="capture-packets" type="number" min="1" max="10000" value="1000">
+                </label>
+              </div>
+              <button id="capture-start" class="primary-button" type="submit">Start live capture</button>
+              <button id="capture-stop" class="danger-button hidden" type="button">Stop and analyze now</button>
+              <p id="capture-error" class="error"></p>
+            </form>
+          </div>
+        </article>
+
+        <article class="panel architecture-panel">
+          <div class="panel-heading">
+            <div>
+              <p class="eyebrow">PIPELINE DESIGN</p>
+              <h2>Three-stage detection</h2>
+            </div>
+          </div>
+          <div class="mini-flow">
+            <div><span>01</span><strong>Ingest</strong><small>PCAP · CSV · live DNS</small></div>
+            <i>→</i>
+            <div><span>02</span><strong>Score</strong><small>3 agents in parallel</small></div>
+            <i>→</i>
+            <div><span>03</span><strong>Report</strong><small>Risk fusion · findings</small></div>
+          </div>
+          <p class="muted">Agent definitions are loaded from <code>.pi/agents</code>. The local runner mirrors the Pi chain and streams lifecycle events to this dashboard.</p>
+        </article>
+      </div>
+
+      <div class="metrics">
+        <article><small>Queries analyzed</small><strong id="metric-total">0</strong></article>
+        <article><small>Suspected threats</small><strong id="metric-suspected">0</strong></article>
+        <article><small>Highest risk</small><strong id="metric-risk">0.00</strong></article>
+        <article><small>Active agents</small><strong id="metric-agents">0 / 7</strong></article>
+      </div>
+
+      <article class="panel history-panel">
+        <div class="panel-heading"><div><p class="eyebrow">RECENT ACTIVITY</p><h2>Analysis history</h2></div></div>
+        <div id="history-list" class="history-list"><p class="empty">No analysis jobs in this server session.</p></div>
+      </article>
+    </section>
+
+    <section id="pipeline-view" class="view">
+      <div class="stage">
+        <div class="stage-title"><span>Stage 01</span><div><h2>Data ingestion</h2><p>Sequential packet parsing and DNS normalization</p></div></div>
+        <div id="stage-1" class="agent-grid"></div>
+      </div>
+      <div class="stage">
+        <div class="stage-title"><span>Stage 02</span><div><h2>Parallel scoring</h2><p>Independent AI/ML and statistical signals</p></div><b>PARALLEL</b></div>
+        <div id="stage-2" class="agent-grid three"></div>
+      </div>
+      <div class="stage">
+        <div class="stage-title"><span>Stage 03</span><div><h2>Risk fusion and report</h2><p>Sequential verdict aggregation</p></div></div>
+        <div id="stage-3" class="agent-grid"></div>
+      </div>
+      <article class="panel terminal-panel">
+        <div class="terminal-title"><span></span><span></span><span></span><strong>agent lifecycle stream</strong></div>
+        <pre id="log-output">Waiting for an analysis job...</pre>
+      </article>
+    </section>
+
+    <section id="report-view" class="view">
+      <div class="metrics report-metrics">
+        <article><small>Total DNS queries</small><strong id="report-total">0</strong></article>
+        <article><small>Suspected domains</small><strong id="report-suspected">0</strong></article>
+        <article><small>Peak combined score</small><strong id="report-risk">0.00</strong></article>
+      </div>
+      <article class="panel">
+        <div class="panel-heading"><div><p class="eyebrow">PRIORITIZED FINDINGS</p><h2>Suspicious domains</h2></div></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Domain</th><th>Entropy</th><th>DGA</th><th>Embedding</th><th>Combined</th><th>Verdict</th></tr></thead>
+            <tbody id="scores-body"><tr><td colspan="6" class="empty">Complete an analysis to view findings.</td></tr></tbody>
+          </table>
+        </div>
+      </article>
+      <article class="panel markdown-panel">
+        <div class="panel-heading"><div><p class="eyebrow">GENERATED OUTPUT</p><h2>Security report</h2></div></div>
+        <pre id="report-output">The generated Markdown report will appear here.</pre>
+      </article>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
