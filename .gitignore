@@ -4,6 +4,8 @@ __pycache__/
 *$py.class
 *.so
 
+webapp/__pycache__/
+
 # Virtual Environment
 .venv/
 venv/
@@ -36,5 +38,6 @@ desktop.ini
 *~
 data/input/
 data/output/
+data/web_jobs/
 models/
 npw/
