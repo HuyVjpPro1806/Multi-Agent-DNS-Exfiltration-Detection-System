@@ -382,9 +382,6 @@ python -m pytest tests/test_web_job_manager.py -v
 - Đây chưa phải IDS/IPS thời gian thực hoàn chỉnh và không tự động chặn lưu
   lượng mạng.
 
-Xem thêm phân tích tại
-[`LIMITATIONS_AND_IMPROVEMENTS.md`](LIMITATIONS_AND_IMPROVEMENTS.md).
-
 ## Nhóm phát triển
 
 Project được xây dựng cho mục đích học tập, nghiên cứu và trình diễn kiến trúc
